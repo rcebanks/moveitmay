@@ -125,6 +125,8 @@ export default function MoveItMay() {
   const [posting,setPosting]         = useState(false);
   const [tonePopover,setTonePopover] = useState(null);
   const [tab,setTab]                 = useState("feed");
+  const [expandedReplies,setExpandedReplies] = useState({});
+  const [replyText,setReplyText]     = useState({});
   const holdTimer = useRef(null);
   const tone = profile?.tone || "";
 
@@ -238,7 +240,7 @@ export default function MoveItMay() {
     if(!text.trim()&&!selType&&!pendImg) return;
     setPosting(true);
     const id=Date.now();
-    const post={id,authorEmail:profile.email,authorName:profile.name,why:profile.why,type:selType,text:text.trim(),ts:id,cheers:{},hasImage:!!pendImg};
+    const post={id,authorEmail:profile.email,authorName:profile.name,why:profile.why,type:selType,text:text.trim(),ts:id,cheers:{},replies:[],hasImage:!!pendImg};
     
     // Save post to Firestore
     try{
@@ -267,6 +269,20 @@ export default function MoveItMay() {
     await savePosts(updated);
   };
 
+  const handleReply=async(postId)=>{
+    const replyMsg = replyText[postId]?.trim();
+    if(!replyMsg) return;
+    
+    const updated=posts.map(p=>{
+      if(p.id!==postId) return p;
+      const replies = p.replies || [];
+      const newReply = {id:Date.now(),authorEmail:profile.email,authorName:profile.name,text:replyMsg,ts:Date.now()};
+      return {...p,replies:[...replies,newReply]};
+    });
+    await savePosts(updated);
+    setReplyText({...replyText,[postId]:""});
+  };
+
   const rCount=(p,e)=>Object.keys(p.cheers||{}).filter(k=>k.endsWith(`:${e}`)).length;
   const myR=(p,e)=>profile&&!!(p.cheers||{})[`${profile.email}:${e}`];
 
@@ -290,17 +306,17 @@ export default function MoveItMay() {
   // ── Shared input style ────────────────────────────────────────────────────
   const inputS={
     width:"100%", background:"rgba(0,0,0,0.06)", border:`1px solid ${C.border}`,
-    borderRadius:4, padding:"14px 16px", color:"#141414", fontSize:15,
+    borderRadius:4, padding:"14px 16px", color:"#141414", fontSize:16,
     fontFamily:"'Barlow',sans-serif", outline:"none", boxSizing:"border-box",
     backdropFilter:"blur(8px)",
   };
   const labelS={
-    fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase",
+    fontSize:17, letterSpacing:"0.14em", textTransform:"uppercase",
     color:C.gray1, marginBottom:8, display:"block", fontFamily:"'Barlow Condensed',sans-serif", fontWeight:600,
   };
   const ctaBtn=(extra={})=>({
     background:C.accent, color:C.black, border:"none", borderRadius:2,
-    padding:"16px 0", width:"100%", fontSize:18, fontWeight:700,
+    padding:"16px 0", width:"100%", fontSize:20, fontWeight:700,
     fontFamily:"'Bebas Neue',sans-serif", letterSpacing:"0.08em",
     cursor:"pointer", ...extra,
   });
@@ -325,7 +341,7 @@ export default function MoveItMay() {
               MOVE IT<br/>
               <span style={{color:C.accent}}>MAY</span>
             </p>
-            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:13,letterSpacing:"0.18em",color:"rgba(20,20,20,0.45)",marginTop:6,textTransform:"uppercase"}}>
+            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.18em",color:"rgba(20,20,20,0.45)",marginTop:6,textTransform:"uppercase"}}>
               Community Movement Challenge · May 2026
             </p>
           </div>
@@ -337,8 +353,8 @@ export default function MoveItMay() {
           {/* What is this */}
           <div style={{position:"relative",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:4,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",overflow:"hidden"}}>
             <SpeedLines/>
-            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:"0.18em",color:C.accent,marginBottom:8,fontWeight:600}}>THE CHALLENGE</p>
-            <p style={{fontSize:14,color:"#4a3828",lineHeight:1.65,margin:0,fontFamily:"'Barlow',sans-serif"}}>
+            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.18em",color:C.accent,marginBottom:8,fontWeight:600}}>THE CHALLENGE</p>
+            <p style={{fontSize:16,color:"#4a3828",lineHeight:1.65,margin:0,fontFamily:"'Barlow',sans-serif"}}>
               31 days. Any movement counts. Show up, log your moves, push each other. Hit your goal and you could win back your entry and then some.
             </p>
           </div>
@@ -346,15 +362,15 @@ export default function MoveItMay() {
           {/* Rules */}
           <div style={{position:"relative",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:4,padding:"16px 18px",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",overflow:"hidden"}}>
             <SpeedLines/>
-            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:"0.18em",color:C.accent,marginBottom:12,fontWeight:600}}>THE RULES</p>
+            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.18em",color:C.accent,marginBottom:12,fontWeight:600}}>THE RULES</p>
             {[
               ["01", "Move 15+ minutes per session. Any movement counts."],
               ["02", "Post it in the app. It only counts if it's logged."],
               ["03", "Hit 20 days by May 31 to qualify for the prize."],
             ].map(([num,txt])=>(
               <div key={num} style={{display:"flex",gap:14,marginBottom:10,alignItems:"flex-start"}}>
-                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:C.accent,flexShrink:0,lineHeight:1.2,position:"relative"}}>{num}</span>
-                <p style={{fontSize:14,color:"#4a3828",lineHeight:1.55,margin:0}}>{txt}</p>
+                <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.accent,flexShrink:0,lineHeight:1.2,position:"relative"}}>{num}</span>
+                <p style={{fontSize:16,color:"#4a3828",lineHeight:1.55,margin:0}}>{txt}</p>
               </div>
             ))}
           </div>
@@ -362,8 +378,8 @@ export default function MoveItMay() {
           {/* Prize */}
           <div style={{position:"relative",background:"linear-gradient(135deg,#fff8f5,#ffeee6)",border:`1px solid rgba(232,93,54,0.25)`,borderRadius:4,padding:"16px 18px",backdropFilter:"blur(12px)",overflow:"hidden"}}>
             <SpeedLines/>
-            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:11,letterSpacing:"0.18em",color:C.accent,marginBottom:8,fontWeight:600}}>THE 50/50 PRIZE</p>
-            <p style={{fontSize:14,color:"#4a3828",lineHeight:1.65,margin:0}}>
+            <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.18em",color:C.accent,marginBottom:8,fontWeight:600}}>THE 50/50 PRIZE</p>
+            <p style={{fontSize:16,color:"#4a3828",lineHeight:1.65,margin:0}}>
               Everyone who qualifies gets entered in a raffle. One winner takes 50% of the total pot. More people in means a bigger prize.
             </p>
           </div>
@@ -385,7 +401,7 @@ export default function MoveItMay() {
         <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:52,lineHeight:0.95,color:C.white,margin:"0 0 4px"}}>
           LET'S<br/><span style={{color:C.accent}}>GO.</span>
         </p>
-        <p style={{color:"#6a5848",fontSize:14,marginBottom:40,lineHeight:1.6,fontFamily:"'Barlow',sans-serif"}}>
+        <p style={{color:"#6a5848",fontSize:16,marginBottom:40,lineHeight:1.6,fontFamily:"'Barlow',sans-serif"}}>
           Enter your email to get started, or to pick up where you left off on another device.
         </p>
 
@@ -397,8 +413,8 @@ export default function MoveItMay() {
           onKeyDown={e=>e.key==="Enter"&&handleEmailContinue()}
           autoCapitalize="off" autoCorrect="off"
         />
-        {emailErr&&<p style={{fontSize:12,color:"#e85d36",marginBottom:12,fontFamily:"'Barlow',sans-serif"}}>{emailErr}</p>}
-        <p style={{fontSize:12,color:C.gray2,marginBottom:32,lineHeight:1.6}}>
+        {emailErr&&<p style={{fontSize:16,color:"#e85d36",marginBottom:12,fontFamily:"'Barlow',sans-serif"}}>{emailErr}</p>}
+        <p style={{fontSize:16,color:C.gray2,marginBottom:32,lineHeight:1.6}}>
           Your email is your key. Use the same one on any device to access your profile and progress.
         </p>
 
@@ -418,7 +434,7 @@ export default function MoveItMay() {
         <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:48,lineHeight:0.95,color:C.white,margin:"0 0 4px"}}>
           YOU'RE<br/><span style={{color:C.accent}}>IN.</span>
         </p>
-        <p style={{color:"#6a5848",fontSize:14,marginBottom:36,lineHeight:1.6}}>
+        <p style={{color:"#6a5848",fontSize:16,marginBottom:36,lineHeight:1.6}}>
           Tell the crew who you are.
         </p>
 
@@ -433,12 +449,12 @@ export default function MoveItMay() {
         <label style={labelS}>Why are you joining Move It May?</label>
         <textarea
           id="why-in"
-          style={{...inputS,resize:"none",lineHeight:1.6,marginBottom:6}}
+          style={{...inputS,resize:"none",lineHeight:1.6,marginBottom:6,fontSize:16}}
           rows={4}
           placeholder="e.g. I want to feel stronger, stop making excuses..."
           value={whyIn} onChange={e=>setWhyIn(e.target.value)}
         />
-        <p style={{fontSize:11,color:C.gray2,marginBottom:32,fontFamily:"'Barlow',sans-serif"}}>
+        <p style={{fontSize:17,color:C.gray2,marginBottom:32,fontFamily:"'Barlow',sans-serif"}}>
           This is visible to everyone in the group. It is your public motivation.
         </p>
 
@@ -472,19 +488,16 @@ export default function MoveItMay() {
         {/* Header */}
         <div style={{position:"sticky",top:0,zIndex:10,background:"rgba(255,255,255,0.94)",borderBottom:`1px solid ${C.border}`,backdropFilter:"blur(16px)",padding:"12px 16px"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:22,letterSpacing:"0.04em",color:C.white}}>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:"0.04em",color:C.white}}>
               MOVE IT <span style={{color:C.accent}}>MAY</span>
-            </span>
-            <span style={{fontSize:10,color:C.gray2,letterSpacing:"0.1em",fontFamily:"'Barlow Condensed',sans-serif"}}>
-              HOLD REACTION TO SET TONE
             </span>
           </div>
           {/* Progress */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
-            <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:12,letterSpacing:"0.1em",color:C.gray1}}>
+            <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.1em",color:C.gray1}}>
               {profile?.name?.toUpperCase()}
             </span>
-            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:qualified?C.accent:C.white,letterSpacing:"0.06em"}}>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:18,color:qualified?C.accent:C.white,letterSpacing:"0.06em"}}>
               {qualified?"GOAL REACHED":`${mayDays} / ${GOAL_DAYS} DAYS`}
             </span>
           </div>
@@ -496,7 +509,7 @@ export default function MoveItMay() {
         {/* Qualified banner */}
         {qualified&&(
           <div style={{background:C.accentDim,borderBottom:`1px solid rgba(232,93,54,0.2)`,padding:"10px 16px",textAlign:"center"}}>
-            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:15,letterSpacing:"0.1em",color:C.accent}}>
+            <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,letterSpacing:"0.1em",color:C.accent}}>
               YOU HIT 20 DAYS. YOU ARE ENTERED IN THE RAFFLE.
             </span>
           </div>
@@ -511,7 +524,7 @@ export default function MoveItMay() {
               const active=selType===t;
               return(
                 <button key={t}
-                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:11,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",flexShrink:0,transition:"all 0.15s"}}
+                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:17,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",flexShrink:0,transition:"all 0.15s"}}
                   onClick={()=>setSelType(active?null:t)}>
                   {t.toUpperCase()}
                 </button>
@@ -520,7 +533,7 @@ export default function MoveItMay() {
           </div>
 
           <textarea
-            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:14,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",outline:"none",marginBottom:10,lineHeight:1.55}}
+            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:16,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",outline:"none",marginBottom:10,lineHeight:1.55}}
             rows={3}
             placeholder="What did you do? Push the crew forward..."
             value={text}
@@ -530,7 +543,7 @@ export default function MoveItMay() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <div style={{position:"relative",display:"inline-block"}}>
-                <div style={{background:"transparent",border:`1px solid rgba(255,255,255,0.2)`,borderRadius:2,padding:"8px 14px",fontSize:11,color:"rgba(20,20,20,0.45)",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",pointerEvents:"none"}}>
+                <div style={{background:"transparent",border:`1px solid rgba(255,255,255,0.2)`,borderRadius:2,padding:"8px 14px",fontSize:17,color:"rgba(20,20,20,0.45)",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",pointerEvents:"none"}}>
                   + PHOTO
                 </div>
                 <input type="file" accept="image/*" onChange={handleImgChange}
@@ -540,12 +553,12 @@ export default function MoveItMay() {
                 <div style={{position:"relative"}}>
                   <img src={pendImg} style={{width:44,height:44,objectFit:"cover",borderRadius:2,border:`1px solid ${C.border}`}} alt="preview"/>
                   <button onClick={()=>setPendImg(null)}
-                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>x</button>
+                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>x</button>
                 </div>
               )}
             </div>
             <button
-              style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"10px 22px",fontSize:13,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em",cursor:"pointer",opacity:posting?0.6:1}}
+              style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"10px 22px",fontSize:17,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em",cursor:"pointer",opacity:posting?0.6:1}}
               onClick={handlePost} disabled={posting}>
               {posting?"...":"POST MOVE"}
             </button>
@@ -556,7 +569,7 @@ export default function MoveItMay() {
         <div style={{display:"flex",borderBottom:`1px solid ${C.border}`,background:"rgba(255,255,255,0.97)"}}>
           {[["feed","FEED"],["leaderboard","LEADERBOARD"]].map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)}
-              style={{flex:1,padding:"13px 0",fontSize:12,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray1,borderBottom:tab===id?`2px solid ${C.accent}`:"2px solid transparent",transition:"all 0.15s"}}>
+              style={{flex:1,padding:"13px 0",fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray1,borderBottom:tab===id?`2px solid ${C.accent}`:"2px solid transparent",transition:"all 0.15s"}}>
               {label}
             </button>
           ))}
@@ -566,59 +579,101 @@ export default function MoveItMay() {
         {tab==="feed"&&(
           posts.length===0?(
             <div style={{padding:"64px 20px",textAlign:"center"}}>
-              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"rgba(0,0,0,0.12)",letterSpacing:"0.06em"}}>NO MOVES YET</p>
-              <p style={{color:C.gray2,fontSize:13,fontFamily:"'Barlow',sans-serif"}}>Be the first to post.</p>
+              <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:40,color:"rgba(0,0,0,0.12)",letterSpacing:"0.06em"}}>NO MOVES YET</p>
+              <p style={{color:C.gray2,fontSize:16,fontFamily:"'Barlow',sans-serif"}}>Be the first to post.</p>
             </div>
           ):(
             Object.entries(grouped).map(([date,dayPosts])=>(
               <div key={date}>
                 <div style={{display:"flex",alignItems:"center",gap:12,padding:"18px 16px 6px"}}>
                   <div style={{flex:1,height:1,background:"rgba(0,0,0,0.06)"}}/>
-                  <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:10,color:C.gray2,letterSpacing:"0.18em",whiteSpace:"nowrap"}}>{date}</span>
+                  <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:16,color:C.gray2,letterSpacing:"0.18em",whiteSpace:"nowrap"}}>{date}</span>
                   <div style={{flex:1,height:1,background:"rgba(0,0,0,0.06)"}}/>
                 </div>
                 {dayPosts.map(post=>(
                   <div key={post.id} style={{position:"relative",background:C.card,borderBottom:`1px solid ${C.border}`,padding:"14px 16px",overflow:"hidden",boxShadow:"0 1px 0 #e8ddd0"}}>
                     <SpeedLines style={{opacity:0.3}}/>
                     <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10,position:"relative"}}>
-                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:C.accent,flexShrink:0,fontFamily:"'Bebas Neue',sans-serif"}}>
+                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:700,color:C.accent,flexShrink:0,fontFamily:"'Bebas Neue',sans-serif"}}>
                         {post.authorName?.[0]?.toUpperCase()}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                          <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:15,color:"#141414",letterSpacing:"0.04em"}}>{post.authorName?.toUpperCase()}</span>
-                          <span style={{fontSize:10,color:C.gray2,flexShrink:0,marginLeft:8,fontFamily:"'Barlow',sans-serif"}}>{timeAgo(post.ts)}</span>
+                          <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17,color:"#141414",letterSpacing:"0.04em"}}>{post.authorName?.toUpperCase()}</span>
+                          <span style={{fontSize:16,color:C.gray2,flexShrink:0,marginLeft:8,fontFamily:"'Barlow',sans-serif"}}>{timeAgo(post.ts)}</span>
                         </div>
-                        {post.why&&<p style={{fontSize:11,color:C.gray2,margin:"2px 0 0",fontStyle:"italic",lineHeight:1.4}}>"{post.why}"</p>}
+                        {post.why&&<p style={{fontSize:17,color:C.gray2,margin:"2px 0 0",fontStyle:"italic",lineHeight:1.4}}>"{post.why}"</p>}
                       </div>
                     </div>
 
                     {post.type&&(
-                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:10,color:"rgba(20,20,20,0.45)",marginBottom:8,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.12em",position:"relative"}}>
+                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:16,color:"rgba(20,20,20,0.45)",marginBottom:8,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.12em",position:"relative"}}>
                         {post.type.toUpperCase()}
                       </div>
                     )}
-                    {post.text&&<p style={{fontSize:14,color:"#2a1f17",lineHeight:1.6,marginBottom:post.hasImage?10:12,position:"relative"}}>{post.text}</p>}
+                    {post.text&&<p style={{fontSize:16,color:"#2a1f17",lineHeight:1.6,marginBottom:post.hasImage?10:12,position:"relative"}}>{post.text}</p>}
                     {imgs[post.id]&&<img src={imgs[post.id]} style={{width:"100%",borderRadius:2,marginBottom:10,maxHeight:320,objectFit:"cover",display:"block",position:"relative"}} alt="workout"/>}
 
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap",position:"relative"}}>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",position:"relative",marginBottom:8}}>
                       {REACTS.map(e=>{
                         const be=stripTone(e);
                         const count=rCount(post,be);
                         const active=myR(post,be);
-                        const canReact=post.authorEmail!==profile?.email;
                         return(
                           <button key={e}
-                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:14,cursor:canReact?"pointer":"default",color:active?C.accent:C.gray1,fontFamily:"'Barlow',sans-serif",transition:"all 0.15s",userSelect:"none",WebkitUserSelect:"none"}}
+                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:16,cursor:"pointer",color:active?C.accent:C.gray1,fontFamily:"'Barlow',sans-serif",transition:"all 0.15s",userSelect:"none",WebkitUserSelect:"none"}}
                             onMouseDown={onHoldStart} onMouseUp={onHoldEnd} onMouseLeave={onHoldEnd}
                             onTouchStart={onHoldStart} onTouchEnd={onHoldEnd}
-                            onClick={()=>canReact&&handleReact(post.id,be)}
-                            title={canReact?"Tap to react. Hold to change skin tone.":"Your post"}>
+                            onClick={()=>handleReact(post.id,be)}
+                            title="Tap to react. Hold to change skin tone.">
                             {addTone(e,tone)}{count>0?` ${count}`:""}
                           </button>
                         );
                       })}
                     </div>
+                    <p style={{fontSize:11,color:C.gray2,margin:"4px 0 8px",fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.1em"}}>Hold reaction to set tone</p>
+
+                    {/* Replies section */}
+                    {(post.replies || []).length > 0 && (
+                      <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:10}}>
+                        {post.replies.map(reply=>(
+                          <div key={reply.id} style={{marginBottom:8,fontSize:16,display:"flex",justifyContent:"flex-end"}}>
+                            <div style={{maxWidth:"85%",background:C.accentDim,borderLeft:`3px solid ${C.accent}`,paddingLeft:12,paddingRight:12,paddingTop:6,paddingBottom:6,borderRadius:4}}>
+                              <div style={{display:"flex",gap:8,marginBottom:2,justifyContent:"space-between"}}>
+                                <strong style={{color:C.accent}}>{reply.authorName}</strong>
+                                <span style={{fontSize:16,color:C.gray2}}>{timeAgo(reply.ts)}</span>
+                              </div>
+                              <p style={{margin:0,color:"#2a1f17",lineHeight:1.5}}>{reply.text}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reply composer */}
+                    {expandedReplies[post.id] && (
+                      <div style={{display:"flex",gap:8,marginTop:10,paddingTop:10,borderTop:`1px solid ${C.border}`}}>
+                        <input
+                          type="text"
+                          placeholder="Reply..."
+                          value={replyText[post.id] || ""}
+                          onChange={(e)=>setReplyText({...replyText,[post.id]:e.target.value})}
+                          style={{flex:1,padding:"8px 10px",fontSize:16,border:`1px solid ${C.border}`,borderRadius:2,outline:"none"}}
+                          onKeyDown={(e)=>e.key==="Enter"&&handleReply(post.id)}
+                        />
+                        <button
+                          onClick={()=>handleReply(post.id)}
+                          style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"8px 14px",fontSize:17,fontWeight:700,cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif"}}>
+                          SEND
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={()=>setExpandedReplies({...expandedReplies,[post.id]:!expandedReplies[post.id]})}
+                      style={{marginTop:8,background:"transparent",border:"none",color:C.accent,fontSize:16,cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,padding:0}}>
+                      {expandedReplies[post.id]?"CLOSE":"REPLY"}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -631,7 +686,7 @@ export default function MoveItMay() {
           <div style={{padding:"8px 0"}}>
             {leaderboard.length===0?(
               <div style={{padding:"64px 20px",textAlign:"center"}}>
-                <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:32,color:"rgba(0,0,0,0.12)",letterSpacing:"0.06em"}}>NO DATA YET</p>
+                <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:36,color:"rgba(0,0,0,0.12)",letterSpacing:"0.06em"}}>NO DATA YET</p>
               </div>
             ):leaderboard.map((u,i)=>{
               const p2=Math.min((u.count/GOAL_DAYS)*100,100);
@@ -641,19 +696,19 @@ export default function MoveItMay() {
                 <div key={u.email} style={{position:"relative",background:isMe?C.meHighlight:C.card,borderBottom:`1px solid ${C.border}`,borderLeft:isMe?`3px solid ${C.accent}`:"3px solid transparent",padding:"14px 16px",overflow:"hidden"}}>
                   <SpeedLines style={{opacity:0.25}}/>
                   <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,position:"relative"}}>
-                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,color:i===0?C.accent:i<3?C.gray1:C.gray2,width:28,flexShrink:0,letterSpacing:"0.02em"}}>
+                    <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:i===0?C.accent:i<3?C.gray1:C.gray2,width:28,flexShrink:0,letterSpacing:"0.02em"}}>
                       {String(i+1).padStart(2,"0")}
                     </span>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-                        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:15,color:isMe?C.accent:"#141414",letterSpacing:"0.04em"}}>
-                          {u.name?.toUpperCase()}{isMe&&<span style={{fontSize:10,color:C.accent,marginLeft:8,fontWeight:400,letterSpacing:"0.1em"}}>YOU</span>}
+                        <span style={{fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:17,color:isMe?C.accent:"#141414",letterSpacing:"0.04em"}}>
+                          {u.name?.toUpperCase()}{isMe&&<span style={{fontSize:11,color:C.accent,marginLeft:8,fontWeight:400,letterSpacing:"0.1em"}}>YOU</span>}
                         </span>
-                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:done?C.accent:"rgba(255,255,255,0.4)",letterSpacing:"0.06em",flexShrink:0}}>
+                        <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:done?C.accent:"rgba(255,255,255,0.4)",letterSpacing:"0.06em",flexShrink:0}}>
                           {done?"QUALIFIED":`${u.count} / ${GOAL_DAYS}`}
                         </span>
                       </div>
-                      {u.why&&<p style={{fontSize:11,color:C.gray2,margin:"2px 0 0",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>"{u.why}"</p>}
+                      {u.why&&<p style={{fontSize:17,color:C.gray2,margin:"2px 0 0",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>"{u.why}"</p>}
                     </div>
                   </div>
                   <div style={{height:2,background:"rgba(0,0,0,0.06)",overflow:"hidden",position:"relative"}}>
