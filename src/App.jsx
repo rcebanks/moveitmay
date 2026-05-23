@@ -18,7 +18,7 @@ const db = getFirestore(app);
 
 const SESSION_KEY = "mim-session";
 const GOAL_DAYS       = 20;
-const CHALLENGE_MONTH = 3;
+const CHALLENGE_MONTH = 4;
 
 // ── Skin tones ────────────────────────────────────────────────────────────────
 const SKIN_TONES    = [
