@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, updateDoc, deleteDoc } from "firebase/firestore";
 
-// ── Firebase config ─────────────────────────────────────────────────────────[...]
+// ── Firebase config ─────────────────────────────────────────────────────────[..[...]
 const firebaseConfig = {
   apiKey: "AIzaSyBNIBqorJRrYEdEiA8vFAudU_wKYC0V_9w",
   authDomain: "moveitmay26.firebaseapp.com",
@@ -20,7 +20,7 @@ const SESSION_KEY = "mim-session";
 const GOAL_DAYS       = 20;
 const CHALLENGE_MONTH = 4;
 
-// ── Skin tones ───────────────────────────────────────────────────────────[...]
+// ── Skin tones ───────────────────────────────────────────────────────────[.[...]
 const SKIN_TONES    = [
   { label:"Default",      mod:"" },
   { label:"Light",        mod:"\u{1F3FB}" },
@@ -39,7 +39,7 @@ const addTone   = (e,m) => (!m||!TONE_ELIGIBLE.has(e)) ? e : e+m;
 const TYPES = ["Walk","Run","Bike","Lift","Stretch","Dance","Swim","Other"];
 const REACTS = ["🔥","💪","👏","🙌","✊"];
 
-// ── Design tokens ──────────────────────────────────────────────────────────[...]
+// ── Design tokens ──────────────────────────────────────────────────────────[.[...]
 const C = {
   black:    "#ffffff",
   offblack: "#f5f0e8",
@@ -58,7 +58,7 @@ const C = {
 const HERO = "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=80";
 const FONTS = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap";
 
-// ── Helpers ────────────────────────────────────────────────────────────[...]
+// ── Helpers ────────────────────────────────────────────────────────────[.[...]
 function timeAgo(ts) {
   const m=Math.floor((Date.now()-ts)/60000);
   if(m<1) return "just now";
@@ -127,6 +127,7 @@ export default function MoveItMay() {
   const [tab,setTab]                 = useState("feed");
   const [expandedReplies,setExpandedReplies] = useState({});
   const [replyText,setReplyText]     = useState({});
+  const [showDevMenu,setShowDevMenu] = useState(false);
   const holdTimer = useRef(null);
   const tone = profile?.tone || "";
 
@@ -164,6 +165,18 @@ export default function MoveItMay() {
         }
       }catch{}
     })();
+  },[]);
+
+  // ── Dev menu keyboard shortcut (Ctrl+Shift+D) ───────────────────────────────
+  useEffect(()=>{
+    const handleKeyDown=(e)=>{
+      if(e.ctrlKey && e.shiftKey && e.key==="D"){
+        e.preventDefault();
+        setShowDevMenu(prev=>!prev);
+      }
+    };
+    window.addEventListener("keydown",handleKeyDown);
+    return()=>window.removeEventListener("keydown",handleKeyDown);
   },[]);
 
   const savePosts=async(u)=>{ 
@@ -351,7 +364,7 @@ export default function MoveItMay() {
     cursor:"pointer", ...extra,
   });
 
-  // ── WELCOME ───────────────────────────────────────────────────────────[...]
+  // ── WELCOME ───────────────────────────────────────────────────────────[..[...]
   if(step==="welcome") return(
     <>
       <link href={FONTS} rel="stylesheet"/>
@@ -500,6 +513,25 @@ export default function MoveItMay() {
     <>
       <link href={FONTS} rel="stylesheet"/>
 
+      {/* Dev menu modal */}
+      {showDevMenu&&(
+        <>
+          <div onClick={()=>setShowDevMenu(false)} style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.5)"}}/>
+          <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",zIndex:201,background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:8,padding:"24px",maxWidth:320,boxShadow:"0 10px 40px rgba(0,0,0,0.2)"}}>
+            <p style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:20,color:C.accent,margin:"0 0 16px"}}>DEVELOPER MENU</p>
+            <button onClick={()=>{handleClearAllData();setShowDevMenu(false);}}
+              style={{width:"100%",background:"#e85d36",color:"#ffffff",border:"none",borderRadius:4,padding:"12px",fontSize:16,fontWeight:700,cursor:"pointer",fontFamily:"'Barlow',sans-serif",marginBottom:8}}>
+              Clear All Data
+            </button>
+            <button onClick={()=>setShowDevMenu(false)}
+              style={{width:"100%",background:"rgba(0,0,0,0.06)",border:`1px solid ${C.border}`,borderRadius:4,padding:"12px",fontSize:16,cursor:"pointer",fontFamily:"'Barlow',sans-serif"}}>
+              Close
+            </button>
+            <p style={{fontSize:12,color:C.gray2,margin:"12px 0 0",textAlign:"center"}}>Press Ctrl+Shift+D to toggle</p>
+          </div>
+        </>
+      )}
+
       {/* Tone popover */}
       {tonePopover&&(
         <>
@@ -507,7 +539,8 @@ export default function MoveItMay() {
           <div style={{position:"fixed",left:tonePopover.x,top:tonePopover.y,zIndex:101,background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:50,padding:"10px 14px",display:"flex",gap:6}}>
             {SKIN_TONES.map((t,i)=>(
               <button key={i} onClick={()=>saveTone(t.mod)} title={t.label}
-                style={{width:tone===t.mod?36:28,height:tone===t.mod?36:28,borderRadius:"50%",background:TONE_COLORS[i],border:`3px solid ${tone===t.mod?C.accent:"#e8ddd0"}`,cursor:"pointer",outline:"none",transition:"all 0.2s"}}/>
+                style={{width:tone===t.mod?36:28,height:tone===t.mod?36:28,borderRadius:"50%",background:TONE_COLORS[i],border:`3px solid ${tone===t.mod?C.accent:"#e8ddd0"}`,cursor:"pointer",outline:"none",transition:"all 0.2s"}}
+              />
             ))}
           </div>
         </>
@@ -521,11 +554,6 @@ export default function MoveItMay() {
             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:"0.04em",color:C.white}}>
               MOVE IT <span style={{color:C.accent}}>MAY</span>
             </span>
-            {/* Developer clear button */}
-            <button onClick={handleClearAllData}
-              style={{background:"rgba(0,0,0,0.05)",border:`1px solid ${C.border}`,borderRadius:2,padding:"6px 12px",fontSize:12,color:C.gray1,cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.1em"}}>
-              CLEAR DATA
-            </button>
           </div>
           {/* Progress */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
@@ -559,7 +587,7 @@ export default function MoveItMay() {
               const active=selType===t;
               return(
                 <button key={t}
-                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:17,cursor:"pointer",fontWeight:600,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.05em"}}
+                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:17,cursor:"pointer",fontFamily:"'Barlow',sans-serif",fontWeight:500,whiteSpace:"nowrap"}}
                   onClick={()=>setSelType(active?null:t)}>
                   {t.toUpperCase()}
                 </button>
@@ -568,7 +596,7 @@ export default function MoveItMay() {
           </div>
 
           <textarea
-            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:16,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",outline:"none"}}
+            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:16,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",marginBottom:12}}
             rows={3}
             placeholder="What did you do? Push the crew forward..."
             value={text}
@@ -588,14 +616,14 @@ export default function MoveItMay() {
                 <div style={{position:"relative"}}>
                   <img src={pendImg} style={{width:44,height:44,objectFit:"cover",borderRadius:2,border:`1px solid ${C.border}`}} alt="preview"/>
                   <button onClick={()=>setPendImg(null)}
-                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}> 
+                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}>
                     ×
                   </button>
                 </div>
               )}
             </div>
             <button
-              style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"10px 22px",fontSize:17,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em",cursor:"pointer",opacity:posting?0.6:1}}
+              style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"10px 22px",fontSize:17,fontWeight:700,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em",cursor:"pointer"}}
               onClick={handlePost} disabled={posting}>
               {posting?"...":"POST MOVE"}
             </button>
@@ -606,7 +634,7 @@ export default function MoveItMay() {
         <div style={{display:"flex",borderBottom:`1px solid ${C.border}`,background:"rgba(255,255,255,0.97)"}}>
           {[["feed","FEED"],["leaderboard","LEADERBOARD"]].map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)}
-              style={{flex:1,padding:"13px 0",fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray2,borderBottom:tab===id?`3px solid ${C.accent}`:"3px solid transparent",transition:"all 0.3s"}}>
+              style={{flex:1,padding:"13px 0",fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray1,borderBottom:tab===id?`3px solid ${C.accent}`:"3px solid transparent"}}>
               {label}
             </button>
           ))}
@@ -631,7 +659,7 @@ export default function MoveItMay() {
                   <div key={post.id} style={{position:"relative",background:C.card,borderBottom:`1px solid ${C.border}`,padding:"14px 16px",overflow:"hidden",boxShadow:"0 1px 0 #e8ddd0"}}>
                     <SpeedLines style={{opacity:0.3}}/>
                     <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10,position:"relative"}}>
-                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:C.accent,fontWeight:700}}>
+                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:16,color:C.accent,fontWeight:700}}>
                         {post.authorName?.[0]?.toUpperCase()}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
@@ -644,7 +672,7 @@ export default function MoveItMay() {
                     </div>
 
                     {post.type&&(
-                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:16,color:"rgba(20,20,20,0.4)",marginBottom:8,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.08em"}}>
+                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:16,color:"rgba(20,20,20,0.4)",marginBottom:8}}>
                         {post.type.toUpperCase()}
                       </div>
                     )}
@@ -658,7 +686,7 @@ export default function MoveItMay() {
                         const active=myR(post,be);
                         return(
                           <button key={e}
-                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:16,cursor:"pointer",color:"#141414",fontWeight:600,transition:"all 0.2s"}}
+                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:16,cursor:"pointer",color:"#141414"}}
                             onMouseDown={onHoldStart} onMouseUp={onHoldEnd} onMouseLeave={onHoldEnd}
                             onTouchStart={onHoldStart} onTouchEnd={onHoldEnd}
                             onClick={()=>handleReact(post.id,be)}
@@ -700,7 +728,7 @@ export default function MoveItMay() {
                         />
                         <button
                           onClick={()=>handleReply(post.id)}
-                          style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"8px 14px",fontSize:17,fontWeight:700,cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em"}}>
+                          style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"8px 14px",fontSize:17,fontWeight:700,cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.08em"}}>
                           SEND
                         </button>
                       </div>
@@ -730,7 +758,7 @@ export default function MoveItMay() {
               const done=u.count>=GOAL_DAYS;
               const isMe=u.email===profile?.email;
               return(
-                <div key={u.email} style={{position:"relative",background:isMe?C.meHighlight:C.card,borderBottom:`1px solid ${C.border}`,borderLeft:isMe?`3px solid ${C.accent}`:"3px solid transparent",padding:"14px 16px",overflow:"hidden"}}>
+                <div key={u.email} style={{position:"relative",background:isMe?C.meHighlight:C.card,borderBottom:`1px solid ${C.border}`,borderLeft:isMe?`3px solid ${C.accent}`:"3px solid transparent",padding:"16px",overflow:"hidden"}}>
                   <SpeedLines style={{opacity:0.25}}/>
                   <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8,position:"relative"}}>
                     <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:28,color:i===0?C.accent:i<3?C.gray1:C.gray2,width:28,flexShrink:0,letterSpacing:"0.02em"}}>
