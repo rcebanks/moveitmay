@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, doc, getDoc, setDoc, getDocs, query, where, updateDoc, deleteDoc } from "firebase/firestore";
 
-// ── Firebase config ────────────────────────────────────────────────────────────
+// ── Firebase config ─────────────────────────────────────────────────────────[...]
 const firebaseConfig = {
   apiKey: "AIzaSyBNIBqorJRrYEdEiA8vFAudU_wKYC0V_9w",
   authDomain: "moveitmay26.firebaseapp.com",
@@ -20,7 +20,7 @@ const SESSION_KEY = "mim-session";
 const GOAL_DAYS       = 20;
 const CHALLENGE_MONTH = 4;
 
-// ── Skin tones ────────────────────────────────────────────────────────────────
+// ── Skin tones ───────────────────────────────────────────────────────────[...]
 const SKIN_TONES    = [
   { label:"Default",      mod:"" },
   { label:"Light",        mod:"\u{1F3FB}" },
@@ -39,7 +39,7 @@ const addTone   = (e,m) => (!m||!TONE_ELIGIBLE.has(e)) ? e : e+m;
 const TYPES = ["Walk","Run","Bike","Lift","Stretch","Dance","Swim","Other"];
 const REACTS = ["🔥","💪","👏","🙌","✊"];
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens ──────────────────────────────────────────────────────────[...]
 const C = {
   black:    "#ffffff",
   offblack: "#f5f0e8",
@@ -58,7 +58,7 @@ const C = {
 const HERO = "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=900&q=80";
 const FONTS = "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────[...]
 function timeAgo(ts) {
   const m=Math.floor((Date.now()-ts)/60000);
   if(m<1) return "just now";
@@ -175,6 +175,36 @@ export default function MoveItMay() {
       }
     }catch(e){
       console.error("Error saving posts:", e);
+    }
+  };
+
+  const handleClearAllData=async()=>{
+    if(!window.confirm("Are you sure you want to delete ALL posts and images? This cannot be undone.")) return;
+    
+    try{
+      // Get all posts
+      const postsSnap = await getDocs(collection(db, "posts"));
+      
+      // Delete all posts
+      for(const docSnap of postsSnap.docs){
+        await deleteDoc(doc(db, "posts", docSnap.id));
+      }
+      
+      // Get all post images
+      const imagesSnap = await getDocs(collection(db, "postImages"));
+      
+      // Delete all images
+      for(const docSnap of imagesSnap.docs){
+        await deleteDoc(doc(db, "postImages", docSnap.id));
+      }
+      
+      // Clear local state
+      setPosts([]);
+      setImgs({});
+      alert("All data cleared successfully!");
+    }catch(e){
+      console.error("Error clearing data:", e);
+      alert("Error clearing data. Check console.");
     }
   };
 
@@ -321,7 +351,7 @@ export default function MoveItMay() {
     cursor:"pointer", ...extra,
   });
 
-  // ── WELCOME ───────────────────────────────────────────────────────────────
+  // ── WELCOME ───────────────────────────────────────────────────────────[...]
   if(step==="welcome") return(
     <>
       <link href={FONTS} rel="stylesheet"/>
@@ -376,7 +406,7 @@ export default function MoveItMay() {
           </div>
 
           {/* Prize */}
-          <div style={{position:"relative",background:"linear-gradient(135deg,#fff8f5,#ffeee6)",border:`1px solid rgba(232,93,54,0.25)`,borderRadius:4,padding:"16px 18px",backdropFilter:"blur(12px)",overflow:"hidden"}}>
+          <div style={{position:"relative",background:"linear-gradient(135deg,#fff8f5,#ffeee6)",border:`1px solid rgba(232,93,54,0.25)`,borderRadius:4,padding:"16px 18px",backdropFilter:"blur(12px)",boxShadow:"0 2px 12px rgba(0,0,0,0.06)",overflow:"hidden"}}>
             <SpeedLines/>
             <p style={{fontFamily:"'Barlow Condensed',sans-serif",fontSize:17,letterSpacing:"0.18em",color:C.accent,marginBottom:8,fontWeight:600}}>THE 50/50 PRIZE</p>
             <p style={{fontSize:16,color:"#4a3828",lineHeight:1.65,margin:0}}>
@@ -392,7 +422,7 @@ export default function MoveItMay() {
     </>
   );
 
-  // ── EMAIL ─────────────────────────────────────────────────────────────────
+  // ── EMAIL ───────────────────────────────────────────────────────────[...]
   if(step==="email") return(
     <>
       <link href={FONTS} rel="stylesheet"/>
@@ -425,7 +455,7 @@ export default function MoveItMay() {
     </>
   );
 
-  // ── NEW USER ──────────────────────────────────────────────────────────────
+  // ── NEW USER ──────────────────────────────────────────────────────────[...]
   if(step==="newuser") return(
     <>
       <link href={FONTS} rel="stylesheet"/>
@@ -465,7 +495,7 @@ export default function MoveItMay() {
     </>
   );
 
-  // ── MAIN APP ──────────────────────────────────────────────────────────────
+  // ── MAIN APP ──────────────────────────────────────────────────────────[...]
   return(
     <>
       <link href={FONTS} rel="stylesheet"/>
@@ -474,10 +504,10 @@ export default function MoveItMay() {
       {tonePopover&&(
         <>
           <div onClick={()=>setTonePopover(null)} style={{position:"fixed",inset:0,zIndex:100}}/>
-          <div style={{position:"fixed",left:tonePopover.x,top:tonePopover.y,zIndex:101,background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:50,padding:"10px 14px",display:"flex",gap:10,boxShadow:"0 8px 32px rgba(0,0,0,0.18)",alignItems:"center"}}>
+          <div style={{position:"fixed",left:tonePopover.x,top:tonePopover.y,zIndex:101,background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:50,padding:"10px 14px",display:"flex",gap:6}}>
             {SKIN_TONES.map((t,i)=>(
               <button key={i} onClick={()=>saveTone(t.mod)} title={t.label}
-                style={{width:tone===t.mod?36:28,height:tone===t.mod?36:28,borderRadius:"50%",background:TONE_COLORS[i],border:`3px solid ${tone===t.mod?C.accent:"#e8ddd0"}`,cursor:"pointer",outline:"none",transition:"all 0.15s",flexShrink:0}}/>
+                style={{width:tone===t.mod?36:28,height:tone===t.mod?36:28,borderRadius:"50%",background:TONE_COLORS[i],border:`3px solid ${tone===t.mod?C.accent:"#e8ddd0"}`,cursor:"pointer",outline:"none",transition:"all 0.2s"}}/>
             ))}
           </div>
         </>
@@ -491,6 +521,11 @@ export default function MoveItMay() {
             <span style={{fontFamily:"'Bebas Neue',sans-serif",fontSize:24,letterSpacing:"0.04em",color:C.white}}>
               MOVE IT <span style={{color:C.accent}}>MAY</span>
             </span>
+            {/* Developer clear button */}
+            <button onClick={handleClearAllData}
+              style={{background:"rgba(0,0,0,0.05)",border:`1px solid ${C.border}`,borderRadius:2,padding:"6px 12px",fontSize:12,color:C.gray1,cursor:"pointer",fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.1em"}}>
+              CLEAR DATA
+            </button>
           </div>
           {/* Progress */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
@@ -524,7 +559,7 @@ export default function MoveItMay() {
               const active=selType===t;
               return(
                 <button key={t}
-                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:17,cursor:"pointer",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",flexShrink:0,transition:"all 0.15s"}}
+                  style={{background:active?C.accent:"#ffffff",color:active?C.black:C.gray1,border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"6px 14px",fontSize:17,cursor:"pointer",fontWeight:600,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.05em"}}
                   onClick={()=>setSelType(active?null:t)}>
                   {t.toUpperCase()}
                 </button>
@@ -533,7 +568,7 @@ export default function MoveItMay() {
           </div>
 
           <textarea
-            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:16,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",outline:"none",marginBottom:10,lineHeight:1.55}}
+            style={{width:"100%",background:"#ffffff",border:`1px solid ${C.border}`,borderRadius:2,padding:12,color:C.white,fontSize:16,resize:"none",fontFamily:"'Barlow',sans-serif",boxSizing:"border-box",outline:"none"}}
             rows={3}
             placeholder="What did you do? Push the crew forward..."
             value={text}
@@ -543,7 +578,7 @@ export default function MoveItMay() {
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8}}>
             <div style={{display:"flex",gap:8,alignItems:"center"}}>
               <div style={{position:"relative",display:"inline-block"}}>
-                <div style={{background:"transparent",border:`1px solid rgba(255,255,255,0.2)`,borderRadius:2,padding:"8px 14px",fontSize:17,color:"rgba(20,20,20,0.45)",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.1em",pointerEvents:"none"}}>
+                <div style={{background:"transparent",border:`1px solid rgba(255,255,255,0.2)`,borderRadius:2,padding:"8px 14px",fontSize:17,color:"rgba(20,20,20,0.45)",whiteSpace:"nowrap",fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.1em"}}>
                   + PHOTO
                 </div>
                 <input type="file" accept="image/*" onChange={handleImgChange}
@@ -553,7 +588,9 @@ export default function MoveItMay() {
                 <div style={{position:"relative"}}>
                   <img src={pendImg} style={{width:44,height:44,objectFit:"cover",borderRadius:2,border:`1px solid ${C.border}`}} alt="preview"/>
                   <button onClick={()=>setPendImg(null)}
-                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>x</button>
+                    style={{position:"absolute",top:-5,right:-5,width:16,height:16,borderRadius:"50%",background:C.accent,color:C.black,border:"none",cursor:"pointer",fontSize:12,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"}}> 
+                    ×
+                  </button>
                 </div>
               )}
             </div>
@@ -569,7 +606,7 @@ export default function MoveItMay() {
         <div style={{display:"flex",borderBottom:`1px solid ${C.border}`,background:"rgba(255,255,255,0.97)"}}>
           {[["feed","FEED"],["leaderboard","LEADERBOARD"]].map(([id,label])=>(
             <button key={id} onClick={()=>setTab(id)}
-              style={{flex:1,padding:"13px 0",fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray1,borderBottom:tab===id?`2px solid ${C.accent}`:"2px solid transparent",transition:"all 0.15s"}}>
+              style={{flex:1,padding:"13px 0",fontSize:16,fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.14em",border:"none",cursor:"pointer",background:"transparent",color:tab===id?C.accent:C.gray2,borderBottom:tab===id?`3px solid ${C.accent}`:"3px solid transparent",transition:"all 0.3s"}}>
               {label}
             </button>
           ))}
@@ -594,7 +631,7 @@ export default function MoveItMay() {
                   <div key={post.id} style={{position:"relative",background:C.card,borderBottom:`1px solid ${C.border}`,padding:"14px 16px",overflow:"hidden",boxShadow:"0 1px 0 #e8ddd0"}}>
                     <SpeedLines style={{opacity:0.3}}/>
                     <div style={{display:"flex",alignItems:"flex-start",gap:10,marginBottom:10,position:"relative"}}>
-                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,fontWeight:700,color:C.accent,flexShrink:0,fontFamily:"'Bebas Neue',sans-serif"}}>
+                      <div style={{width:32,height:32,borderRadius:2,background:C.accentDim,border:`1px solid rgba(232,93,54,0.25)`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue',sans-serif",fontSize:14,color:C.accent,fontWeight:700}}>
                         {post.authorName?.[0]?.toUpperCase()}
                       </div>
                       <div style={{flex:1,minWidth:0}}>
@@ -607,7 +644,7 @@ export default function MoveItMay() {
                     </div>
 
                     {post.type&&(
-                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:16,color:"rgba(20,20,20,0.45)",marginBottom:8,fontFamily:"'Barlow Condensed',sans-serif",fontWeight:600,letterSpacing:"0.12em",position:"relative"}}>
+                      <div style={{display:"inline-block",background:"transparent",border:`1px solid rgba(255,255,255,0.15)`,borderRadius:2,padding:"3px 10px",fontSize:16,color:"rgba(20,20,20,0.4)",marginBottom:8,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.08em"}}>
                         {post.type.toUpperCase()}
                       </div>
                     )}
@@ -621,7 +658,7 @@ export default function MoveItMay() {
                         const active=myR(post,be);
                         return(
                           <button key={e}
-                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:16,cursor:"pointer",color:active?C.accent:C.gray1,fontFamily:"'Barlow',sans-serif",transition:"all 0.15s",userSelect:"none",WebkitUserSelect:"none"}}
+                            style={{background:active?C.accentDim:"transparent",border:`1px solid ${active?C.accent:C.border}`,borderRadius:2,padding:"5px 10px",fontSize:16,cursor:"pointer",color:"#141414",fontWeight:600,transition:"all 0.2s"}}
                             onMouseDown={onHoldStart} onMouseUp={onHoldEnd} onMouseLeave={onHoldEnd}
                             onTouchStart={onHoldStart} onTouchEnd={onHoldEnd}
                             onClick={()=>handleReact(post.id,be)}
@@ -663,7 +700,7 @@ export default function MoveItMay() {
                         />
                         <button
                           onClick={()=>handleReply(post.id)}
-                          style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"8px 14px",fontSize:17,fontWeight:700,cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif"}}>
+                          style={{background:C.accent,color:C.black,border:"none",borderRadius:2,padding:"8px 14px",fontSize:17,fontWeight:700,cursor:"pointer",fontFamily:"'Bebas Neue',sans-serif",letterSpacing:"0.1em"}}>
                           SEND
                         </button>
                       </div>
